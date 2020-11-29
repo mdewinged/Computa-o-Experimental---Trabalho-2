@@ -14,33 +14,48 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import classification_report
 from sklearn.feature_extraction.text import TfidfVectorizer
 import nltk
-from nltk.corpus   import stopwords
+from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import LancasterStemmer
-from nltk.stem import WordNetLemmatizer 
+from nltk.stem import WordNetLemmatizer
 
 # Necessários apenas na 1º run
-nltk.download('stopwords')
-nltk.download('punkt')
-nltk.download('wordnet')
+# nltk.download('stopwords')
+# nltk.download('punkt')
+# nltk.download('wordnet')
 #
 
 sw = stopwords.words('english')
+
+
 ###
 
 ### Leitura e preparação dos dados
-paths = ["./dados/20021010_easy_ham/easy_ham/*",
-         "./dados/20021010_hard_ham/hard_ham/*",
-         "./dados/20021010_spam/spam/*",
-         "./dados/20030228_easy_ham/easy_ham/*",
-         "./dados/20030228_easy_ham_2/easy_ham_2/*",
-         "./dados/20030228_hard_ham/hard_ham/*",
-         "./dados/20030228_spam/spam/*",
-         "./dados/20030228_spam_2/spam_2/*",
-         "./dados/20050311_spam_2/spam_2/*"]
+# paths = ["./dados/20021010_easy_ham/easy_ham/*",
+#          "./dados/20021010_hard_ham/hard_ham/*",
+#          "./dados/20021010_spam/spam/*",
+#          "./dados/20030228_easy_ham/easy_ham/*",
+#          "./dados/20030228_easy_ham_2/easy_ham_2/*",
+#          "./dados/20030228_hard_ham/hard_ham/*",
+#          "./dados/20030228_spam/spam/*",
+#          "./dados/20030228_spam_2/spam_2/*",
+#          "./dados/20050311_spam_2/spam_2/*"]
+
+def getEmailContent(fileContent):
+    if 'Subject' in fileContent:
+        return fileContent[fileContent.find('Subject'):]
+    else:
+        return None
+
+
+paths = ["./dados/easy_ham/*",
+         "./dados/easy_ham_2/*"
+         "./dados/hard_ham/*",
+         "./dados/spam/*",
+         "./dados/spam_2/*"]
 
 list_of_files_spam = []
-list_of_files_ham  = []
+list_of_files_ham = []
 
 for path in paths:
     if 'spam' in path:
@@ -49,18 +64,23 @@ for path in paths:
         list_of_files_ham += glob.glob(path)
 
 df = []
-for file in list_of_files_spam:
-    conteudo = open(file, 'r', encoding = 'cp437')
-    df.append([conteudo.read(), 1])
-    conteudo.close()
-for file in list_of_files_ham:
-    conteudo = open(file, 'r', encoding = 'cp437')
-    df.append([conteudo.read(), 0])
-    conteudo.close()        
+for label, files in {1: list_of_files_spam, 0: list_of_files_ham}.items():
+    for file in files:
+        conteudo = open(file, 'r', encoding='cp437')
+        emailContent = getEmailContent(conteudo.read())
+
+        if emailContent is None:
+            continue
+
+        df.append([emailContent, label])
+        conteudo.close()
 
 import pandas as pd
+
 df = pd.DataFrame(df)
 df.columns = ['Text', 'Label']
+
+
 ###
 
 ### Função principal do experimento
@@ -68,30 +88,32 @@ df.columns = ['Text', 'Label']
 def experimento(df):
     y_true = []
     y_pred = []
-    
+
     # Números aleatórios devem ficar anotados para permitir a replicação do experimento
     for random in [69341]:
         vectorizer = TfidfVectorizer(norm="l1", max_df=0.95, min_df=2)
 
-        X_train, X_test, y_train, y_test = train_test_split(df['Text'], df['Label'], test_size=0.3, random_state = random)
-        
+        X_train, X_test, y_train, y_test = train_test_split(df['Text'], df['Label'], test_size=0.3, random_state=random)
+
         vectorizer.fit(X_train)
         vectorizer.fit(X_test)
-         
+
         tfidf_train = vectorizer.transform(X_train).toarray()
         tfidf_test = vectorizer.transform(X_test).toarray()
-        
+
         gnb = GaussianNB()
         gnb.fit(tfidf_train, y_train)
         y_true += list(y_test)
         y_pred += list(gnb.predict(tfidf_test))
-        
+
     print(classification_report(y_true, y_pred) + '\n')
     errados = 0
     for i in range(0, len(y_true)):
         if y_true[i] != y_pred[i]:
             errados += 1
-    print('Corretos: %d\nErrados: %d\n' %(len(y_true) - errados, errados))
+    print('Corretos: %d\nErrados: %d\n' % (len(y_true) - errados, errados))
+
+
 ###
 
 ### Módulos de pré-processamento
@@ -105,6 +127,7 @@ def remocao_de_stopwords(df):
     new_df.columns = ['Text', 'Label']
     return pd.DataFrame(new_df)
 
+
 def stemming(df):
     new_df = []
     lancaster = LancasterStemmer()
@@ -116,9 +139,10 @@ def stemming(df):
     new_df.columns = ['Text', 'Label']
     return pd.DataFrame(new_df)
 
+
 def lemmatization(df):
     new_df = []
-    lemmatizer = WordNetLemmatizer() 
+    lemmatizer = WordNetLemmatizer()
     for i in range(0, len(df)):
         tokens = word_tokenize(df['Text'][i])
         s = [lemmatizer.lemmatize(word) for word in tokens]
@@ -126,6 +150,8 @@ def lemmatization(df):
     new_df = pd.DataFrame(new_df)
     new_df.columns = ['Text', 'Label']
     return pd.DataFrame(new_df)
+
+
 ###
 
 ### Experimentos
