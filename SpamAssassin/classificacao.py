@@ -39,7 +39,7 @@ SPAM = 1
 CUSTOS = {
     'remocao_de_stopwords': 47,     # esses foram os tempos médios que cada um levou na minha máquina.
     'stemming': 58,                 # tempo em segundos!
-    'lemmatization': 44
+    'lemmatization': 45
 }
 STAT_ROD = 8                        # custo de uma rodada
 
@@ -70,6 +70,7 @@ def get_email_content(file_content):
 def create_df():
     list_of_files_spam = []
     list_of_files_ham = []
+    df = []
 
     for path in glob.glob(DATASET_DIRECTORY, recursive=True):
         if 'spam' in path:
@@ -280,7 +281,7 @@ if __name__ == "__main__":
             total_tempo, total_tempo / 60))
 
     for pre_process_list in combinacoes_prepros:
-        print(10 * '#' + ' Experimento ' + str(num_experimentos) + ' ' + 10 * '#')
+        print(10 * '#' + ' Experimento [{}/{}]'.format(num_experimentos, len(combinacoes_prepros) - 1) + ' ' + 10 * '#')
         exp_report['resultado'] = experimento(df, pre_process_list)
         report[num_experimentos] = exp_report
         num_experimentos = num_experimentos + 1
