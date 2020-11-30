@@ -1,6 +1,9 @@
 ### Módulos de pré-processamento
 from nltk import word_tokenize, LancasterStemmer, WordNetLemmatizer
+from nltk.corpus import stopwords
+import pandas as pd
 
+sw = stopwords.words('english')
 
 def remocao_de_stopwords(df):
     new_df = []
