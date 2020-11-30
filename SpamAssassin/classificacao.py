@@ -9,6 +9,8 @@
 
 ### Bibliotecas
 import glob
+import os
+
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.metrics import classification_report
@@ -22,27 +24,15 @@ from nltk.stem import WordNetLemmatizer
 import time
 
 # Necessários apenas na 1º run
-#nltk.download('stopwords')
-#nltk.download('punkt')
-#nltk.download('wordnet')
+# nltk.download('stopwords')
+# nltk.download('punkt')
+# nltk.download('wordnet')
 #
 
 sw = stopwords.words('english')
 
 
-###
-
 ### Leitura e preparação dos dados
-# paths = ["./dados/20021010_easy_ham/easy_ham/*",
-#          "./dados/20021010_hard_ham/hard_ham/*",
-#          "./dados/20021010_spam/spam/*",
-#          "./dados/20030228_easy_ham/easy_ham/*",
-#          "./dados/20030228_easy_ham_2/easy_ham_2/*",
-#          "./dados/20030228_hard_ham/hard_ham/*",
-#          "./dados/20030228_spam/spam/*",
-#          "./dados/20030228_spam_2/spam_2/*",
-#          "./dados/20050311_spam_2/spam_2/*"]
-
 def getEmailContent(fileContent):
     if 'Subject' in fileContent:
         return fileContent[fileContent.find('Subject'):]
@@ -50,16 +40,12 @@ def getEmailContent(fileContent):
         return None
 
 
-paths = ["./dados/easy_ham/*",
-         "./dados/easy_ham_2/*"
-         "./dados/hard_ham/*",
-         "./dados/spam/*",
-         "./dados/spam_2/*"]
+DATASET_DIRECTORY = "./dados/**"
 
 list_of_files_spam = []
 list_of_files_ham = []
 
-for path in paths:
+for path in glob.glob(DATASET_DIRECTORY, recursive=True):
     if 'spam' in path:
         list_of_files_spam += glob.glob(path)
     else:
@@ -68,14 +54,17 @@ for path in paths:
 df = []
 for label, files in {1: list_of_files_spam, 0: list_of_files_ham}.items():
     for file in files:
-        conteudo = open(file, 'r', encoding='cp437')
-        emailContent = getEmailContent(conteudo.read())
 
-        if emailContent is None:
-            continue
+        if os.path.isfile(file):
+            conteudo = open(file, 'r', encoding='cp437')
+            emailContent = getEmailContent(conteudo.read())
 
-        df.append([emailContent, label])
-        conteudo.close()
+            # ignorar arquivos que não contenham o campo 'subject'
+            if emailContent is None:
+                continue
+
+            df.append([emailContent, label])
+            conteudo.close()
 
 import pandas as pd
 
