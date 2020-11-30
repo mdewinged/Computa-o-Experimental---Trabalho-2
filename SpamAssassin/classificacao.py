@@ -9,40 +9,25 @@
 
 ### Bibliotecas
 import datetime
-import glob
 import json
-import os
 import statistics
 import time
 
 import nltk
 import pandas as pd
 from nltk.corpus import stopwords
-from nltk.stem import LancasterStemmer
-from nltk.stem import WordNetLemmatizer
-from nltk.tokenize import word_tokenize
+from preprocessing import remocao_de_stopwords, lemmatization, stemming
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
-
 # Necessários apenas na 1º run
+from utils import create_df, calcular_custo, measure_execution_time
+
 nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('wordnet')
 #
-
-# Apenas pra diminuir magic numbers no código...
-HAM  = 0
-SPAM = 1
-
-CUSTOS = {
-    'remocao_de_stopwords': 47,     # esses foram os tempos médios que cada um levou na minha máquina.
-    'stemming': 58,                 # tempo em segundos!
-    'lemmatization': 45
-}
-STAT_ROD = 8                        # custo de uma rodada
-
 
 sw = stopwords.words('english')
 
@@ -57,48 +42,6 @@ RANDOM_STATES = range(1, 3)
 # TODO: Ainda não é utilizada no código...
 NUM_ROUNDS = 10
 # --------------------------------
-
-
-### Leitura e preparação dos dados
-def get_email_content(file_content):
-    if 'Subject' in file_content:
-        return file_content[file_content.find('Subject'):]
-    else:
-        return None
-
-
-def create_df():
-    list_of_files_spam = []
-    list_of_files_ham = []
-    df = []
-
-    for path in glob.glob(DATASET_DIRECTORY, recursive=True):
-        if 'spam' in path:
-            list_of_files_spam += glob.glob(path)
-        else:
-            list_of_files_ham += glob.glob(path)
-
-    for label, files in {SPAM: list_of_files_spam, HAM: list_of_files_ham}.items():
-        for file in files:
-
-            if os.path.isfile(file):
-                conteudo = open(file, 'r', encoding='cp437')
-                email_content = get_email_content(conteudo.read())
-
-                # ignorar arquivos que não contenham o campo 'subject'
-                if email_content is None:
-                    continue
-
-                df.append([email_content, label])
-                conteudo.close()
-    return df
-
-
-def measure_execution_time(func, func_param):
-    timer = time.thread_time_ns()
-    result = func(func_param)
-    timer = time.thread_time_ns() - timer
-    return timer, result
 
 ### Função principal do experimento
 # Executa o experimento com o dataframe df, mostra o classification_report, quantidade de acertos e erros e retorna um relatório.
@@ -207,52 +150,6 @@ def experimento(df, prepros_list=[]):
 
     return result
 
-
-### Módulos de pré-processamento
-def remocao_de_stopwords(df):
-    new_df = []
-    for i in range(0, len(df)):
-        tokens = word_tokenize(df['Text'][i])
-        s = [word for word in tokens if word not in sw]
-        new_df.append([' '.join(s), df['Label'][i]])
-    new_df = pd.DataFrame(new_df)
-    new_df.columns = ['Text', 'Label']
-    return pd.DataFrame(new_df)
-
-
-def stemming(df):
-    new_df = []
-    lancaster = LancasterStemmer()
-    for i in range(0, len(df)):
-        tokens = word_tokenize(df['Text'][i])
-        s = [lancaster.stem(word) for word in tokens]
-        new_df.append([' '.join(s), df['Label'][i]])
-    new_df = pd.DataFrame(new_df)
-    new_df.columns = ['Text', 'Label']
-    return pd.DataFrame(new_df)
-
-
-def lemmatization(df):
-    new_df = []
-    lemmatizer = WordNetLemmatizer()
-    for i in range(0, len(df)):
-        tokens = word_tokenize(df['Text'][i])
-        s = [lemmatizer.lemmatize(word) for word in tokens]
-        new_df.append([' '.join(s), df['Label'][i]])
-    new_df = pd.DataFrame(new_df)
-    new_df.columns = ['Text', 'Label']
-    return pd.DataFrame(new_df)
-
-
-def calcular_custo(prepros_list):
-    custo = 0
-    for pre_pros in prepros_list:
-        custo = custo + STAT_ROD * len(list(RANDOM_STATES))
-        for f in pre_pros:
-            custo = custo + CUSTOS.get(f.__name__)
-    return custo
-
-
 ### MAIN
 if __name__ == "__main__":
     # Quais pré-processadores e a ordem que devem ser aplicados pra cada experimento.
@@ -270,15 +167,16 @@ if __name__ == "__main__":
     report['horario (inicio)'] = horario_inicio
     report['random states'] = list(RANDOM_STATES)
 
-    df = create_df()
+    df = create_df(DATASET_DIRECTORY)
     df = pd.DataFrame(df)
     df.columns = ['Text', 'Label']
 
-    # Aviso
-    total_tempo = calcular_custo(combinacoes_prepros)
+    # ---- Aviso ----
+    total_tempo = calcular_custo(combinacoes_prepros, RANDOM_STATES)
     print(
         "!!! ATENÇÃO !!!:\nCom a configuração atual levará um tempo médio de {} segundos ou {} minutos para concluir tudo!\n".format(
             total_tempo, total_tempo / 60))
+    # --------
 
     for pre_process_list in combinacoes_prepros:
         print(10 * '#' + ' Experimento [{}/{}]'.format(num_experimentos, len(combinacoes_prepros) - 1) + ' ' + 10 * '#')
