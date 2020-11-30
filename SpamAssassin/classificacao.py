@@ -19,10 +19,12 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import LancasterStemmer
 from nltk.stem import WordNetLemmatizer
 
+import time
+
 # Necessários apenas na 1º run
-# nltk.download('stopwords')
-# nltk.download('punkt')
-# nltk.download('wordnet')
+#nltk.download('stopwords')
+#nltk.download('punkt')
+#nltk.download('wordnet')
 #
 
 sw = stopwords.words('english')
@@ -79,6 +81,43 @@ import pandas as pd
 
 df = pd.DataFrame(df)
 df.columns = ['Text', 'Label']
+
+
+def dumb1():
+    pass
+
+
+def dumb2():
+    pass
+
+
+def measure_execution_time(func, func_param):
+    timer = time.thread_time_ns()
+    # result = func(func_param)
+    result = func()
+    timer = time.thread_time_ns() - timer
+    return timer, result
+
+
+# Função que executa as funções de pré-processamento na ordem que são passadas e executa o treinamento.
+# A cada pré-processamento é extraído:
+# - O tempo de execução
+# - Consumo de memória
+# - Ciclos da CPU
+def experimentoCompleto(df, msg, prepros_list):
+    results = {}
+    result = {}
+
+    new_df = []
+
+    print(msg)
+
+    # Aplicação do pré-processamento.
+    for prepros in prepros_list:
+        # new_df = prepros(new_df)
+        timer, result = measure_execution_time(prepros, None)
+
+        print("Aplicar {} demorou {} ns".format(prepros.__name__, timer))
 
 
 ###
@@ -153,6 +192,8 @@ def lemmatization(df):
 
 
 ###
+
+experimentoCompleto(df, 'Experimento 1', [dumb1, dumb2])
 
 ### Experimentos
 print("Teste sem pré-processamento")
