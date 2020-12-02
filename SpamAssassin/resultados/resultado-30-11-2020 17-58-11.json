@@ -1,0 +1,185 @@
+{
+    "horario(inicio)": "30-11-2020 17-58-11",
+    "random_states": [
+        1,
+        2
+    ],
+    "0": {
+        "resultado": {
+            "rodada_1": {
+                "memoria_media": 2208.2734375,
+                "tempo": 10484375000,
+                "resultado": {
+                    "spam": {
+                        "precision": 0.9816326530612245,
+                        "recall": 0.8825688073394495,
+                        "f1-score": 0.9294685990338165,
+                        "support": 545
+                    },
+                    "ham": {
+                        "precision": 0.9704114655570967,
+                        "recall": 0.99573055028463,
+                        "f1-score": 0.9829079840786702,
+                        "support": 2108
+                    }
+                },
+                "corretos": 2580,
+                "errados": 73
+            },
+            "rodada_2": {
+                "memoria_media": 1901.2109375,
+                "tempo": 8734375000,
+                "resultado": {
+                    "spam": {
+                        "precision": 0.9901768172888016,
+                        "recall": 0.865979381443299,
+                        "f1-score": 0.923923006416132,
+                        "support": 582
+                    },
+                    "ham": {
+                        "precision": 0.9636194029850746,
+                        "recall": 0.9975857073877354,
+                        "f1-score": 0.9803084223013049,
+                        "support": 2071
+                    }
+                },
+                "corretos": 2570,
+                "errados": 83
+            },
+            "tempo_total": 22406250000,
+            "tempo_medio_rodadas": 9609375000,
+            "Desvio padrao das rodadas": 1237436867.0764582,
+            "media_acertos": 2575,
+            "desvio_acertos": 7.0710678118654755,
+            "media_errados": 78,
+            "desvio_errados": 7.0710678118654755
+        }
+    },
+    "1": {
+        "resultado": {
+            "remocao_de_stopwords": {
+                "tempo": 47046875000,
+                "memoria_media": 217.91046875
+            },
+            "stemming": {
+                "tempo": 59250000000,
+                "memoria_media": 251.93275240384617
+            },
+            "lemmatization": {
+                "tempo": 48328125000,
+                "memoria_media": 312.0702311197917
+            },
+            "rodada_1": {
+                "memoria_media": 2350.515625,
+                "tempo": 9062500000,
+                "resultado": {
+                    "spam": {
+                        "precision": 0.9816326530612245,
+                        "recall": 0.8825688073394495,
+                        "f1-score": 0.9294685990338165,
+                        "support": 545
+                    },
+                    "ham": {
+                        "precision": 0.9704114655570967,
+                        "recall": 0.99573055028463,
+                        "f1-score": 0.9829079840786702,
+                        "support": 2108
+                    }
+                },
+                "corretos": 2580,
+                "errados": 73
+            },
+            "rodada_2": {
+                "memoria_media": 2045.9140625,
+                "tempo": 9093750000,
+                "resultado": {
+                    "spam": {
+                        "precision": 0.9901768172888016,
+                        "recall": 0.865979381443299,
+                        "f1-score": 0.923923006416132,
+                        "support": 582
+                    },
+                    "ham": {
+                        "precision": 0.9636194029850746,
+                        "recall": 0.9975857073877354,
+                        "f1-score": 0.9803084223013049,
+                        "support": 2071
+                    }
+                },
+                "corretos": 2570,
+                "errados": 83
+            },
+            "tempo_total": 331359375000,
+            "tempo_medio_rodadas": 9078125000,
+            "Desvio padrao das rodadas": 22097086.91207961,
+            "media_acertos": 2575,
+            "desvio_acertos": 7.0710678118654755,
+            "media_errados": 78,
+            "desvio_errados": 7.0710678118654755
+        }
+    },
+    "2": {
+        "resultado": {
+            "remocao_de_stopwords": {
+                "tempo": 47359375000,
+                "memoria_media": 291.14867665816325
+            },
+            "lemmatization": {
+                "tempo": 44890625000,
+                "memoria_media": 329.98296210106383
+            },
+            "stemming": {
+                "tempo": 58328125000,
+                "memoria_media": 325.8785220286885
+            },
+            "rodada_1": {
+                "memoria_media": 2352.0546875,
+                "tempo": 8984375000,
+                "resultado": {
+                    "spam": {
+                        "precision": 0.9816326530612245,
+                        "recall": 0.8825688073394495,
+                        "f1-score": 0.9294685990338165,
+                        "support": 545
+                    },
+                    "ham": {
+                        "precision": 0.9704114655570967,
+                        "recall": 0.99573055028463,
+                        "f1-score": 0.9829079840786702,
+                        "support": 2108
+                    }
+                },
+                "corretos": 2580,
+                "errados": 73
+            },
+            "rodada_2": {
+                "memoria_media": 2048.40234375,
+                "tempo": 8921875000,
+                "resultado": {
+                    "spam": {
+                        "precision": 0.9901768172888016,
+                        "recall": 0.865979381443299,
+                        "f1-score": 0.923923006416132,
+                        "support": 582
+                    },
+                    "ham": {
+                        "precision": 0.9636194029850746,
+                        "recall": 0.9975857073877354,
+                        "f1-score": 0.9803084223013049,
+                        "support": 2071
+                    }
+                },
+                "corretos": 2570,
+                "errados": 83
+            },
+            "tempo_total": 322343750000,
+            "tempo_medio_rodadas": 8953125000,
+            "Desvio padrao das rodadas": 44194173.82415922,
+            "media_acertos": 2575,
+            "desvio_acertos": 7.0710678118654755,
+            "media_errados": 78,
+            "desvio_errados": 7.0710678118654755
+        }
+    },
+    "horario (fim)": "30-11-2020 18-10-17"
+}
