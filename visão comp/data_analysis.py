@@ -10,12 +10,15 @@ import numpy as np
 import pandas as pd
 import json
 import seaborn as sns
-from time import time
 import numpy as np                                                         
 import scipy as sp                                                         
 import scipy.stats       
-import itertools                                                  
+import itertools  
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score                                                
 
+
+# São lidos todos os arquivos de treinamento, validação e de predição
 kernel_sizes = [(2,2), (4,4), (8,8), (16,16), (32,32)] 
 num_filters  = [2, 8, 32, 64, 128]
         
@@ -47,13 +50,112 @@ for kernel_size in kernel_sizes:
             print("Couldn't find ", ("pred_" + iteration_name + str(".json")), " file\n")
 
 
-from sklearn.metrics import roc_curve
-from sklearn.metrics import roc_auc_score
+acc = []
+for res in results:
+    acc.append(res[1]['val_accuracy'][99])
 
+acc = np.array(acc)
+glob_sum  = sum(acc)
+glob_mean = stat.mean(acc)
+acc = acc.reshape((5,5))
+
+# Calculates de effect of each column and row
+col_sum  = np.array([sum(col) for col in acc])
+col_mean = np.array([stat.mean(col) for col in acc])
+col_effect = col_mean - glob_mean
+
+row_sum  = np.array([sum(row) for row in acc])
+row_mean = np.array([stat.mean(row) for row in acc.T])
+row_effect = row_mean - glob_mean
+
+# Calculates the percentage of each column
+estimated_val = ((np.zeros((5,5)) + glob_mean + row_effect).T + col_effect).T
+err = acc - estimated_val
+sse = sum(sum(err**2))
+
+# Compute the total variation and impact of each variation
+ssy = sum(sum(acc**2))
+ss0 = len(col_effect)*len(row_effect)*(glob_mean**2)
+ssa = len(row_effect)*sum(col_effect**2)
+ssb = len(col_effect)*sum(row_effect**2)
+sst = ssy - ss0
+sse = sst - ssa - ssb
+
+a_impact = 100*ssa/sst
+b_impact = 100*ssb/sst
+unexplained_var = 100*sse/sst 
+a_impact + b_impact + unexplained_var
+
+
+# Analysis of variance
+msa = ssa / (len(col_effect) - 1)
+msb = ssb / (len(row_effect) - 1)
+mse = sse / ((len(col_effect) - 1) * (len(row_effect) - 1))
+
+Fa = msa / mse
+Fb = msb / mse
+
+dt = pd.DataFrame({'acc': acc.reshape(25), 'err': err.reshape(25)})
+dt = dt.sort_values(by = 'acc')
+plt.plot(dt['err'], dt['acc'], 'o')
+plt.show()
+
+# Intervalo de confiança
+sde = mse**(1/2)
+sdu = sde / ((len(row_effect) * len(col_effect))**(1/2))
+sda = mse*((len(col_effect)-1)/ (len(col_effect)*len(row_effect)))**(1/2)
+sdb = mse*((len(row_effect)-1)/ (len(col_effect)*len(row_effect)))**(1/2)
+
+t_val = 4.014996
+ic_u = (glob_mean - sdu*t_val, glob_mean + sdu*t_val)
+rangea = (sda*t_val/(((len(col_effect) - 1) * (len(row_effect) - 1))**(1/2)))
+ic_a = [(mean_a - rangea, mean_a + rangea)for mean_a in col_mean]
+rangeb = (sdb*t_val/(((len(col_effect) - 1) * (len(row_effect) - 1))**(1/2)))
+ic_b = [(mean_b - rangea, mean_b + rangea)for mean_b in row_mean]
+
+
+# Intervalo de Confiança para proporção
+t_val = 2.776445 # 95% com 4 graus de lib
+sd_c = np.array([stat.stdev(col) for col in acc])
+range_c = sd_c*t_val/(len(row_mean)**(1/2))
+ic_c_lw = [col - r for col, r in zip(col_mean, range_c)]
+ic_c_up = [col + r for col, r in zip(col_mean, range_c)]
+
+cat_name = ['2', '4', '8', '16', '32']
+for lower, upper, y in zip(ic_c_lw, ic_c_up, range(len(ic_c_lw))):
+    plt.plot((lower,upper),(y,y),'ro-',color='orange')
+
+plt.yticks(range(len(ic_c_lw)),list(cat_name))
+plt.xlabel("Classification Accuracy")
+plt.ylabel("Kernel Size")
+plt.title("Intervalos de Confiança por Kernel Size")
+plt.show()
+
+
+sd_r = np.array([stat.stdev(row) for row in acc.T])
+range_r = sd_r*t_val/(len(col_mean)**(1/2))
+ic_r_lw = [col - r for col, r in zip(row_mean, range_r)]
+ic_r_up = [col + r) for col, r in zip(row_mean, range_r)]
+
+cat_name = ['2', '8', '16', '32', '64']
+for lower, upper, y in zip(ic_r_lw, ic_c_up, range(len(ic_r_lw))):
+    plt.plot((lower,upper),(y,y),'ro-',color='orange')
+
+plt.yticks(range(len(ic_r_lw)),list(cat_name))
+plt.xlabel("Classification Accuracy")
+plt.ylabel("Kernel Size")
+plt.title("Intervalos de Confiança por Kernel Size")
+plt.show()
+
+
+
+# Converte um array de pesos para array de labels
 def cvt_hot_to_lst(hot_list):
     return np.argmax(hot_list, axis = 1)
 
 
+
+# Calcula os scores e as curvas de ROC
 def roc_eval(labels, name):
     ytest = np.expand_dims(cvt_hot_to_lst(labels[1]), axis = 1)
     ns_probs = [0 for _ in range(len(ytest))]
@@ -95,66 +197,18 @@ with open(("roc_result.json"), 'w', encoding='utf8') as outfile:
         json.dump(roc_result, outfile, indent = 2, ensure_ascii = False)
 
 
+
+# Converte todos os arrays de peso para array de labels
 def cvt_all(list_structure):
     for i in range(len(list_structure)):
         list_structure[i][1][0] = cvt_hot_to_lst(list_structure[i][1][0])
         list_structure[i][1][1] = cvt_hot_to_lst(list_structure[i][1][1])
     return list_structure
 
-
 predict = cvt_all(predict)
+    
 
-
-
-def count_precision_recall(list1, list2):
-    false_pos = 0
-    false_neg = 0
-    correct = 0
-    for l1,l2 in zip(list1, list2):
-        if(l1==l2):
-            correct +=1
-        elif(l2==0):
-            false_neg +=1
-        elif(l2==1):
-            false_pos +=1
-    return(len(list1), correct, false_neg, false_pos)
-
-
-for pred in predict:
-    total, a, b, c = count_precision_recall(pred[1][0], pred[1][1])
-    print(pred[0], ":\t precision ", a/total, "\tfalseneg ", b/total, "\tfalsepos ", c/total)
-
-        
-
-
-
-def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    plt.figure(figsize = (5,5))
-    plt.imshow(cm, interpolation='nearest', cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=90)
-    plt.yticks(tick_marks, classes)
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, cm[i, j],
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-
-
-plot_confusion_matrix(np.expand_dims(predict[0][1][1], axis = 0), np.expand_dims(predict[0][1][0], axis=0))
-
-
+    
 # Plots de verificação se cada experimento estava consistente entre validação e treinamento
 for i in range(len(results)):
     plt.plot(results[i][1]['val_accuracy'], label = "val")
