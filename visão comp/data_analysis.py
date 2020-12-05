@@ -16,7 +16,7 @@ import scipy.stats
 import itertools  
 from sklearn.metrics import roc_curve
 from sklearn.metrics import roc_auc_score                                                
-
+import pingouin
 
 # São lidos todos os arquivos de treinamento, validação e de predição
 kernel_sizes = [(2,2), (4,4), (8,8), (16,16), (32,32)] 
@@ -53,6 +53,11 @@ for kernel_size in kernel_sizes:
 acc = []
 for res in results:
     acc.append(res[1]['val_accuracy'][99])
+
+pingouin.qqplot(acc)
+plt.xlabel("Quantis Teóricos")
+plt.ylabel("Quantis ordenados")
+plt.title("")
 
 acc = np.array(acc)
 glob_sum  = sum(acc)
